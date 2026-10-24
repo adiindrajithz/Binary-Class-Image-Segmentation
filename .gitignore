@@ -1,0 +1,14 @@
+# Ignore datasets, models, and environments
+data/
+*.csv
+*.pkl
+*.h5
+*.pt
+.venv/
+__pycache__/
+
+grayscaleImages/
+JPEGImages/
+SegmentationClass/
+Visualizations/
+*.pth
