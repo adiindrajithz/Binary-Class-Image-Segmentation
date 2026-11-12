@@ -12,3 +12,4 @@ JPEGImages/
 SegmentationClass/
 Visualizations/
 *.pth
+__pycache__
