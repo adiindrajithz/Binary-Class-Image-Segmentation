@@ -129,6 +129,8 @@ jupyter notebook imageSegmentation_refactored.ipynb
 
 ## Data
 
+Original Dataset: https://www.kaggle.com/datasets/kooaslansefat/uav-segmentation-aeroscapes
+
 | Folder | Contents |
 |---|---|
 | `grayscaleImages/images/` | Grayscale JPEG images |
