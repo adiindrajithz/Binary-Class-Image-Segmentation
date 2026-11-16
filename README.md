@@ -40,6 +40,7 @@ Binary Image Segmentation/
 │
 ├── imageSegmentation_refactored.ipynb  # ← USE THIS NOTEBOOK
 ├── imageSegmentation.ipynb             # Original notebook (kept for reference)
+├── cli.py                              # Command-line interface (argparse)
 ├── requirements.txt
 └── README.md
 ```
@@ -124,6 +125,106 @@ jupyter notebook imageSegmentation_refactored.ipynb
 
 > [!NOTE]
 > When running locally, comment out the Google Drive mount cells (Cells 0–1). The `config.py` uses `Path(__file__).resolve().parent.parent` to auto-detect the project root.
+
+---
+
+## CLI Reference
+
+All training, evaluation, and inference tasks can be run directly from the terminal via `cli.py` — no notebook required.
+
+### Commands at a glance
+
+| Command | Description |
+|---|---|
+| `list-models` | Print all available model keys |
+| `data-info` | Show dataset split sizes and config |
+| `train` | Train one model or all models sequentially |
+| `evaluate` | Evaluate a saved checkpoint on the test set |
+| `predict` | Visualise predictions on test samples |
+| `benchmark` | Compare all saved checkpoints in one table |
+
+### Training
+
+```bash
+# Train UNet with default epochs (from config.py)
+python cli.py train --model unet
+
+# Train with custom epochs, learning rate, and show curves after
+python cli.py train --model unet --epochs 50 --lr 3e-4 --plot-curves
+
+# Train all models sequentially using config defaults
+python cli.py train --model all
+
+# Train on CPU explicitly
+python cli.py train --model fpn --device cpu
+```
+
+> [!TIP]
+> `--model` accepts: `unet`, `fpn`, `sam2`, `fcn`, or `all`.
+
+### Evaluation
+
+```bash
+# Evaluate using the default checkpoint path from config.py
+python cli.py evaluate --model unet
+
+# Evaluate a specific checkpoint file
+python cli.py evaluate --model fpn --checkpoint checkpoints/fpn_model.pth
+
+# Change the prediction threshold
+python cli.py evaluate --model sam2 --threshold 0.4
+```
+
+### Inference / Visualisation
+
+```bash
+# Visualise 4 test samples (default)
+python cli.py predict --model unet
+
+# Visualise 6 samples from a specific checkpoint
+python cli.py predict --model unet --checkpoint checkpoints/MobileNetV3UNet.pth --num-samples 6
+```
+
+### Benchmark (all models)
+
+```bash
+# Evaluate every model that has a saved checkpoint and print comparison table
+python cli.py benchmark
+```
+
+### Dataset info
+
+```bash
+# Print train / val / test split counts
+python cli.py data-info
+
+# Override data directories
+python cli.py data-info --image-dir path/to/images --mask-dir path/to/masks
+```
+
+### Common flags
+
+| Flag | Default | Applies to | Description |
+|---|---|---|---|
+| `--device` | `auto` | train, evaluate, predict, benchmark | `auto` / `cpu` / `cuda` / `mps` |
+| `--epochs` / `-e` | config value | train | Override number of epochs |
+| `--lr` | `1e-4` | train | Learning rate |
+| `--patience` | `5` | train | Early-stopping patience |
+| `--batch-size` | config value | train | Training batch size |
+| `--checkpoint` | config path | train, evaluate, predict | Custom checkpoint file path |
+| `--plot-curves` | off | train | Show loss/IoU curves after training |
+| `--threshold` | `0.5` | evaluate, predict, benchmark | Binary prediction cutoff |
+| `--num-samples` | `4` | predict | Number of test samples to visualise |
+| `--img-size H W` | `256 256` | all | Image resize dimensions |
+| `--seed` | `42` | all | Random seed for data split |
+
+### Get help for any command
+
+```bash
+python cli.py --help
+python cli.py train --help
+python cli.py evaluate --help
+```
 
 ---
 

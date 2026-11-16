@@ -12,4 +12,4 @@ JPEGImages/
 SegmentationClass/
 Visualizations/
 *.pth
-__pycache__
+select_and_convert.py 
