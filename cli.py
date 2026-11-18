@@ -72,31 +72,20 @@ def _resolve_device(device_str: str):
 
 
 def _load_checkpoint(ckpt_path, device):
-    """Load a full-model checkpoint saved with torch.save(model, path).
 
-    PyTorch >= 2.6 changed weights_only default to True, which blocks
-    unpickling arbitrary classes (like our model objects).  We explicitly
-    set weights_only=False here because the checkpoint contains the full
-    model object, not just a state-dict.  Only use trusted checkpoints.
-    """
     import torch
-    from src import models as _models  # noqa: F401 – ensures model classes are importable
+    from src import models as _models 
 
-    # Register our model classes as safe globals (PyTorch >= 2.6 requirement)
     safe_classes = [
         _models.MobileNetV3UNet,
-        _models.PyTorchFPN,
-        _models.FPNWrapper,
+        _models.FPN,
         _models.SAM2SegmentationModel,
         _models.FCNBinary,
-        _models.ConvBlock,
-        _models.ConvRelu,
-        _models.TwoWayAttentionBlock,
     ]
     try:
         torch.serialization.add_safe_globals(safe_classes)
     except AttributeError:
-        pass  # torch < 2.6 – not needed
+        pass 
 
     return torch.load(ckpt_path, map_location=device, weights_only=False)
 
