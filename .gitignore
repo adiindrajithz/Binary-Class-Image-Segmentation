@@ -5,6 +5,7 @@ data/
 *.h5
 *.pt
 .venv/
+.ruff_cache/
 __pycache__/
 
 grayscaleImages/

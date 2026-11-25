@@ -49,14 +49,14 @@ def compute_metrics(
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     dice = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
 
-    return dict(
-        avg_loss=avg_loss,
-        pixel_accuracy=pixel_accuracy,
-        mean_iou=mean_iou,
-        precision=precision,
-        recall=recall,
-        dice=dice,
-    )
+    return {
+        "avg_loss": avg_loss,
+        "pixel_accuracy": pixel_accuracy,
+        "mean_iou": mean_iou,
+        "precision": precision,
+        "recall": recall,
+        "dice": dice,
+    }
 
 
 def evaluate_model(
@@ -84,7 +84,7 @@ def evaluate_model(
 
             preds = (torch.sigmoid(outputs) >= threshold).squeeze(1).long()
 
-            for p, t in zip(preds, masks):
+            for p, t in zip(preds, masks, strict=False):
                 iou_sum += compute_iou(p, t, target_class=1)
                 correct_px += (p == t).sum().item()
                 total_px += t.numel()

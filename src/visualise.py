@@ -66,14 +66,16 @@ def visualise_predictions(
 def plot_benchmark_comparison(metrics_dict: dict[str, dict]) -> pd.DataFrame:
     rows = []
     for name, m in metrics_dict.items():
-        rows.append({
-            "Model": name,
-            "Pixel Accuracy (%)": round(m.get("pixel_accuracy", 0.0), 2),
-            "Mean IoU": round(m.get("mean_iou", 0.0), 4),
-            "Dice / F1": round(m.get("dice", 0.0), 4),
-            "Precision": round(m.get("precision", 0.0), 4),
-            "Recall": round(m.get("recall", 0.0), 4),
-        })
+        rows.append(
+            {
+                "Model": name,
+                "Pixel Accuracy (%)": round(m.get("pixel_accuracy", 0.0), 2),
+                "Mean IoU": round(m.get("mean_iou", 0.0), 4),
+                "Dice / F1": round(m.get("dice", 0.0), 4),
+                "Precision": round(m.get("precision", 0.0), 4),
+                "Recall": round(m.get("recall", 0.0), 4),
+            }
+        )
 
     comparison_df = pd.DataFrame(rows)
 
@@ -89,12 +91,10 @@ def plot_benchmark_comparison(metrics_dict: dict[str, dict]) -> pd.DataFrame:
     width = 0.35
 
     rects1 = ax.bar(
-        x - width / 2, comparison_df["Mean IoU"], width,
-        label="Mean IoU", color="tab:blue"
+        x - width / 2, comparison_df["Mean IoU"], width, label="Mean IoU", color="tab:blue"
     )
     rects2 = ax.bar(
-        x + width / 2, comparison_df["Dice / F1"], width,
-        label="Dice / F1", color="tab:orange"
+        x + width / 2, comparison_df["Dice / F1"], width, label="Dice / F1", color="tab:orange"
     )
 
     ax.set_ylabel("Score (0.0 – 1.0)", fontsize=11)

@@ -1,22 +1,20 @@
 import torch
 import torch.nn as nn
 from torchvision.models.segmentation import (
+    DeepLabV3_MobileNet_V3_Large_Weights,
     FCN_ResNet50_Weights,
     LRASPP_MobileNet_V3_Large_Weights,
-    DeepLabV3_MobileNet_V3_Large_Weights,
+    deeplabv3_mobilenet_v3_large,
     fcn_resnet50,
     lraspp_mobilenet_v3_large,
-    deeplabv3_mobilenet_v3_large,
 )
 
 
 class MobileNetV3UNet(nn.Module):
     def __init__(self):
         super().__init__()
-        self.model = lraspp_mobilenet_v3_large(
-            weights=LRASPP_MobileNet_V3_Large_Weights.DEFAULT
-        )
-        self.model.classifier.low_classifier  = nn.Conv2d(40,  1, kernel_size=1)
+        self.model = lraspp_mobilenet_v3_large(weights=LRASPP_MobileNet_V3_Large_Weights.DEFAULT)
+        self.model.classifier.low_classifier = nn.Conv2d(40, 1, kernel_size=1)
         self.model.classifier.high_classifier = nn.Conv2d(128, 1, kernel_size=1)
 
     def forward(self, x: torch.Tensor) -> dict:
@@ -32,6 +30,7 @@ def build_mobileunet(device: torch.device) -> MobileNetV3UNet:
 class FPN(nn.Module):
     def __init__(self):
         import segmentation_models_pytorch as smp
+
         super().__init__()
         self.model = smp.FPN(
             encoder_name="resnet34",

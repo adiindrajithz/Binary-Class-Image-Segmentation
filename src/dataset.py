@@ -3,10 +3,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import torchvision.transforms as T
 from PIL import Image
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
-import torchvision.transforms as T
 
 from src.config import (
     BATCH_SIZE,
@@ -31,11 +31,13 @@ def build_dataframes(
     for img_path in image_files:
         mask_path = mask_dir / f"{img_path.stem}.png"
         if mask_path.exists():
-            records.append({
-                "image_path": str(img_path),
-                "mask_path": str(mask_path),
-                "file_name": img_path.name,
-            })
+            records.append(
+                {
+                    "image_path": str(img_path),
+                    "mask_path": str(mask_path),
+                    "file_name": img_path.name,
+                }
+            )
 
     df = pd.DataFrame(records)
 
@@ -56,11 +58,13 @@ class BinarySegmentationDataset(Dataset):
         self.df = df
         self.img_size = img_size
 
-        self.img_transform = T.Compose([
-            T.Resize(self.img_size),
-            T.ToTensor(),
-            T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
-        ])
+        self.img_transform = T.Compose(
+            [
+                T.Resize(self.img_size),
+                T.ToTensor(),
+                T.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
+            ]
+        )
         self.mask_resize = T.Resize(self.img_size, interpolation=T.InterpolationMode.NEAREST)
 
     def __len__(self) -> int:

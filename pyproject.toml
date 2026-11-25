@@ -1,0 +1,37 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (unused imports, undefined names)
+    "I",   # isort (import order)
+    "UP",  # pyupgrade (modern Python syntax)
+    "B",   # flake8-bugbear (common bugs)
+    "C4",  # flake8-comprehensions (cleaner list/dict comprehensions)
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "B008",   # function call in default arg (common in ML code)
+    "SIM108", # ternary operator suggestion — keep if/else for readability
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Notebooks and scripts can have unused imports (e.g. for side effects)
+"*.ipynb" = ["F401", "E402"]
+# CLI entry-point can have broad imports at module level
+"cli.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-third-party = ["torch", "torchvision", "numpy", "pandas", "PIL", "sklearn", "matplotlib", "segmentation_models_pytorch"]
+known-first-party  = ["src"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

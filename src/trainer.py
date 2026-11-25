@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -40,7 +38,7 @@ def train_model(
     lr: float = LEARNING_RATE,
     patience: int = EARLY_STOP_PATIENCE,
     threshold: float = PRED_THRESHOLD,
-    save_path: Optional[str] = None,
+    save_path: str | None = None,
 ) -> tuple[nn.Module, dict]:
     pos_weight = compute_pos_weight(train_dataset, device)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
@@ -48,9 +46,9 @@ def train_model(
 
     best_val_loss = float("inf")
     epochs_no_improve = 0
-    best_state: Optional[dict] = None
+    best_state: dict | None = None
 
-    history = dict(train_losses=[], val_losses=[], train_ious=[], val_ious=[])
+    history = {"train_losses": [], "val_losses": [], "train_ious": [], "val_ious": []}
 
     for epoch in range(1, num_epochs + 1):
         model.train()
@@ -115,10 +113,7 @@ def train_model(
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= patience:
-                print(
-                    f"Early stopping at epoch {epoch}. "
-                    f"Best val loss: {best_val_loss:.4f}"
-                )
+                print(f"Early stopping at epoch {epoch}. Best val loss: {best_val_loss:.4f}")
                 break
 
     if best_state is not None:
@@ -142,33 +137,25 @@ def plot_training_curves(history: dict, model_name: str = "Model") -> None:
         axes = [axes]
 
     axes[0].plot(
-        epochs_r, history["train_losses"], marker="o", label="Train Loss",
-        color="royalblue", lw=2
+        epochs_r, history["train_losses"], marker="o", label="Train Loss", color="royalblue", lw=2
     )
     axes[0].plot(
-        epochs_r, history["val_losses"], marker="s", label="Val Loss",
-        color="crimson", lw=2
+        epochs_r, history["val_losses"], marker="s", label="Val Loss", color="crimson", lw=2
     )
-    axes[0].set(
-        title=f"{model_name}: Training vs. Validation Loss",
-        xlabel="Epoch", ylabel="Loss"
-    )
+    axes[0].set(title=f"{model_name}: Training vs. Validation Loss", xlabel="Epoch", ylabel="Loss")
     axes[0].legend()
     axes[0].grid(True, linestyle="--", alpha=0.6)
     axes[0].set_xticks(list(epochs_r))
 
     if has_iou:
         axes[1].plot(
-            epochs_r, history["train_ious"], marker="o", label="Train IoU",
-            color="seagreen", lw=2
+            epochs_r, history["train_ious"], marker="o", label="Train IoU", color="seagreen", lw=2
         )
         axes[1].plot(
-            epochs_r, history["val_ious"], marker="s", label="Val IoU",
-            color="darkorange", lw=2
+            epochs_r, history["val_ious"], marker="s", label="Val IoU", color="darkorange", lw=2
         )
         axes[1].set(
-            title=f"{model_name}: Training vs. Validation IoU",
-            xlabel="Epoch", ylabel="Mean IoU"
+            title=f"{model_name}: Training vs. Validation IoU", xlabel="Epoch", ylabel="Mean IoU"
         )
         axes[1].set_ylim(0, 1)
         axes[1].legend()

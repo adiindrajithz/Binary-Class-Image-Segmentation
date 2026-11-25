@@ -31,34 +31,33 @@ import argparse
 import sys
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 MODEL_REGISTRY: dict[str, dict] = {
     "unet": {
-        "display":    "MobileNetV3-UNet",
-        "builder":    "build_mobileunet",
-        "ckpt":       "UNET_CKPT",
+        "display": "MobileNetV3-UNet",
+        "builder": "build_mobileunet",
+        "ckpt": "UNET_CKPT",
         "epochs_key": "UNET_EPOCHS",
     },
     "fpn": {
-        "display":    "FPN (ResNet34)",
-        "builder":    "build_fpn",
-        "ckpt":       "FPN_CKPT",
+        "display": "FPN (ResNet34)",
+        "builder": "build_fpn",
+        "ckpt": "FPN_CKPT",
         "epochs_key": "FPN_EPOCHS",
     },
     "sam2": {
-        "display":    "SAM2 Segmentation",
-        "builder":    "build_sam2",
-        "ckpt":       "SAM2_CKPT",
+        "display": "SAM2 Segmentation",
+        "builder": "build_sam2",
+        "ckpt": "SAM2_CKPT",
         "epochs_key": "SAM2_EPOCHS",
     },
     "fcn": {
-        "display":    "FCN (ResNet50)",
-        "builder":    "build_fcn",
-        "ckpt":       "FCN_CKPT",
+        "display": "FCN (ResNet50)",
+        "builder": "build_fcn",
+        "ckpt": "FCN_CKPT",
         "epochs_key": "FCN_EPOCHS",
     },
 }
@@ -66,6 +65,7 @@ MODEL_REGISTRY: dict[str, dict] = {
 
 def _resolve_device(device_str: str):
     import torch
+
     if device_str == "auto":
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
     return torch.device(device_str)
@@ -74,7 +74,8 @@ def _resolve_device(device_str: str):
 def _load_checkpoint(ckpt_path, device):
 
     import torch
-    from src import models as _models 
+
+    from src import models as _models
 
     safe_classes = [
         _models.MobileNetV3UNet,
@@ -82,10 +83,10 @@ def _load_checkpoint(ckpt_path, device):
         _models.SAM2SegmentationModel,
         _models.FCNBinary,
     ]
-    try:
+    import contextlib
+
+    with contextlib.suppress(AttributeError):
         torch.serialization.add_safe_globals(safe_classes)
-    except AttributeError:
-        pass 
 
     return torch.load(ckpt_path, map_location=device, weights_only=False)
 
@@ -98,7 +99,7 @@ def _load_data(image_dir: str | None, mask_dir: str | None, seed: int, img_size:
     from src.dataset import build_dataframes, build_dataloaders
 
     image_dir_p = _Path(image_dir) if image_dir else config.IMAGE_DIR
-    mask_dir_p  = _Path(mask_dir)  if mask_dir  else config.MASK_DIR
+    mask_dir_p = _Path(mask_dir) if mask_dir else config.MASK_DIR
 
     df, train_df, val_df, test_df = build_dataframes(
         image_dir=image_dir_p,
@@ -106,13 +107,15 @@ def _load_data(image_dir: str | None, mask_dir: str | None, seed: int, img_size:
         random_seed=seed,
     )
     train_ds, val_ds, test_ds, train_loader, val_loader, test_loader = build_dataloaders(
-        train_df, val_df, test_df, img_size=img_size,
+        train_df,
+        val_df,
+        test_df,
+        img_size=img_size,
     )
     return df, train_ds, val_ds, test_ds, train_loader, val_loader, test_loader
 
 
 def _build_model(model_key: str, device):
-    import importlib
     from src import models
 
     builder_name = MODEL_REGISTRY[model_key]["builder"]
@@ -122,6 +125,7 @@ def _build_model(model_key: str, device):
 
 def _get_ckpt_path(model_key: str, checkpoint: str | None) -> Path:
     from src import config
+
     if checkpoint:
         return Path(checkpoint)
     attr = MODEL_REGISTRY[model_key]["ckpt"]
@@ -130,6 +134,7 @@ def _get_ckpt_path(model_key: str, checkpoint: str | None) -> Path:
 
 def _get_default_epochs(model_key: str, epochs_override: int | None) -> int:
     from src import config
+
     if epochs_override is not None:
         return epochs_override
     attr = MODEL_REGISTRY[model_key]["epochs_key"]
@@ -139,6 +144,7 @@ def _get_default_epochs(model_key: str, epochs_override: int | None) -> int:
 # ---------------------------------------------------------------------------
 # Sub-command implementations
 # ---------------------------------------------------------------------------
+
 
 def cmd_list_models(args):
     """List all available model keys."""
@@ -171,18 +177,19 @@ def cmd_data_info(args):
 
 def cmd_train(args):
     """Train one or all models."""
-    import torch
     from src import config
-    from src.trainer import train_model, plot_training_curves
+    from src.trainer import plot_training_curves, train_model
 
-    device    = _resolve_device(args.device)
-    img_size  = tuple(args.img_size)
+    device = _resolve_device(args.device)
+    img_size = tuple(args.img_size)
     model_key = args.model.lower()
 
     keys_to_train = list(MODEL_REGISTRY.keys()) if model_key == "all" else [model_key]
 
     if model_key != "all" and model_key not in MODEL_REGISTRY:
-        print(f"[ERROR] Unknown model '{model_key}'. Run 'python cli.py list-models' to see options.")
+        print(
+            f"[ERROR] Unknown model '{model_key}'. Run 'python cli.py list-models' to see options."
+        )
         sys.exit(1)
 
     # Load data once
@@ -194,10 +201,10 @@ def cmd_train(args):
     config.CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
 
     for key in keys_to_train:
-        info     = MODEL_REGISTRY[key]
+        info = MODEL_REGISTRY[key]
         n_epochs = _get_default_epochs(key, args.epochs)
-        ckpt     = _get_ckpt_path(key, args.checkpoint if model_key != "all" else None)
-        lr       = args.lr
+        ckpt = _get_ckpt_path(key, args.checkpoint if model_key != "all" else None)
+        lr = args.lr
         patience = args.patience
 
         print(f"\n{'=' * 50}")
@@ -227,8 +234,8 @@ def cmd_train(args):
 
 def cmd_evaluate(args):
     """Evaluate a saved model checkpoint on the test set."""
-    import torch
     import torch.nn as nn
+
     from src.metrics import evaluate_model, print_eval_report
     from src.trainer import compute_pos_weight
 
@@ -237,7 +244,7 @@ def cmd_evaluate(args):
         print(f"[ERROR] Unknown model '{model_key}'.")
         sys.exit(1)
 
-    device   = _resolve_device(args.device)
+    device = _resolve_device(args.device)
     img_size = tuple(args.img_size)
 
     print("Loading dataset …")
@@ -255,16 +262,17 @@ def cmd_evaluate(args):
     model.to(device)
 
     pos_weight = compute_pos_weight(train_ds, device)
-    criterion  = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     print(f"Evaluating {MODEL_REGISTRY[model_key]['display']} …\n")
-    metrics = evaluate_model(model, test_loader, test_ds, criterion, device, threshold=args.threshold)
+    metrics = evaluate_model(
+        model, test_loader, test_ds, criterion, device, threshold=args.threshold
+    )
     print_eval_report(metrics, model_name=MODEL_REGISTRY[model_key]["display"])
 
 
 def cmd_predict(args):
     """Run visual inference on test samples."""
-    import torch
     from src.visualise import visualise_predictions
 
     model_key = args.model.lower()
@@ -272,13 +280,11 @@ def cmd_predict(args):
         print(f"[ERROR] Unknown model '{model_key}'.")
         sys.exit(1)
 
-    device   = _resolve_device(args.device)
+    device = _resolve_device(args.device)
     img_size = tuple(args.img_size)
 
     print("Loading dataset …")
-    _, _, _, test_ds, _, _, _ = _load_data(
-        args.image_dir, args.mask_dir, args.seed, img_size
-    )
+    _, _, _, test_ds, _, _, _ = _load_data(args.image_dir, args.mask_dir, args.seed, img_size)
 
     ckpt = _get_ckpt_path(model_key, args.checkpoint)
     if not ckpt.exists():
@@ -301,13 +307,13 @@ def cmd_predict(args):
 
 def cmd_benchmark(args):
     """Evaluate all models with saved checkpoints and print a comparison table."""
-    import torch
     import torch.nn as nn
+
     from src.metrics import evaluate_model
     from src.trainer import compute_pos_weight
     from src.visualise import plot_benchmark_comparison
 
-    device   = _resolve_device(args.device)
+    device = _resolve_device(args.device)
     img_size = tuple(args.img_size)
 
     print("Loading dataset …")
@@ -316,7 +322,7 @@ def cmd_benchmark(args):
     )
 
     pos_weight = compute_pos_weight(train_ds, device)
-    criterion  = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     metrics_dict: dict[str, dict] = {}
 
@@ -342,6 +348,7 @@ def cmd_benchmark(args):
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
+
 
 def _add_common_data_args(parser: argparse.ArgumentParser):
     """Shared dataset-related arguments."""
@@ -426,13 +433,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Train a segmentation model (or all models).",
     )
     p_train.add_argument(
-        "--model", "-m",
+        "--model",
+        "-m",
         required=True,
         choices=[*MODEL_REGISTRY.keys(), "all"],
         help="Model architecture to train, or 'all' to train every model sequentially.",
     )
     p_train.add_argument(
-        "--epochs", "-e",
+        "--epochs",
+        "-e",
         type=int,
         default=None,
         help="Number of training epochs. Defaults to the value in config.py for each model.",
@@ -477,7 +486,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Evaluate a saved checkpoint on the test set.",
     )
     p_eval.add_argument(
-        "--model", "-m",
+        "--model",
+        "-m",
         required=True,
         choices=list(MODEL_REGISTRY.keys()),
         help="Model architecture.",
@@ -500,7 +510,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run inference and visualise predictions on test samples.",
     )
     p_pred.add_argument(
-        "--model", "-m",
+        "--model",
+        "-m",
         required=True,
         choices=list(MODEL_REGISTRY.keys()),
         help="Model architecture.",
@@ -541,18 +552,18 @@ def build_parser() -> argparse.ArgumentParser:
 
 COMMAND_MAP = {
     "list-models": cmd_list_models,
-    "data-info":   cmd_data_info,
-    "train":       cmd_train,
-    "evaluate":    cmd_evaluate,
-    "predict":     cmd_predict,
-    "benchmark":   cmd_benchmark,
+    "data-info": cmd_data_info,
+    "train": cmd_train,
+    "evaluate": cmd_evaluate,
+    "predict": cmd_predict,
+    "benchmark": cmd_benchmark,
 }
 
 
 def main():
     parser = build_parser()
-    args   = parser.parse_args()
-    fn     = COMMAND_MAP.get(args.command)
+    args = parser.parse_args()
+    fn = COMMAND_MAP.get(args.command)
     if fn is None:
         parser.print_help()
         sys.exit(1)
@@ -561,4 +572,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
