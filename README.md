@@ -267,6 +267,29 @@ Trained weights are saved to `checkpoints/` automatically during training.
 
 ---
 
+## Code Style
+
+This project uses **[Ruff](https://docs.astral.sh/ruff/)** for linting and formatting (configured in `pyproject.toml`).
+
+```bash
+# Install ruff
+pip install ruff
+
+# Check for issues
+ruff check src cli.py
+
+# Auto-fix all fixable issues
+ruff check src cli.py --fix
+
+# Format code
+ruff format src cli.py
+```
+
+> [!TIP]
+> Run `ruff check src cli.py --fix && ruff format src cli.py` before every commit to keep the codebase clean.
+
+---
+
 ## Requirements
 
 ```
